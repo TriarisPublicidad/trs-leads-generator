@@ -29,3 +29,4 @@ Plugin de WordPress nativo para la captación, gestión y distribución de leads
 - **FASE 3:** Procesamiento de Leads (Guardado en BD + Push a Google Sheets) y Seguridad.
 - **FASE 4:** Generación de Landing Pages, Imágenes de portada y PDFs.
 - **FASE 5:** Integración de APIs publicitarias (Meta/Google Ads para pautas en Draft).
+

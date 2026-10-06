@@ -61,3 +61,4 @@ class TRS_Post_Types {
 		register_post_type( 'trs_form', $args );
 	}
 }
+

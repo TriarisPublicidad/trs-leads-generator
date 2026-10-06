@@ -28,3 +28,4 @@ class TRS_Deactivator {
 		flush_rewrite_rules();
 	}
 }
+

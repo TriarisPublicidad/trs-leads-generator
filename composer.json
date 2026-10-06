@@ -1,0 +1,22 @@
+{
+    "name": "triaris/trs-leads-generator",
+    "description": "WordPress plugin nativo para captación, gestión y distribución inteligente de leads.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Triaris Publicidad",
+            "homepage": "https://triaris.pe"
+        }
+    ],
+    "require": {
+        "php": ">=8.0",
+        "dompdf/dompdf": "^3.1"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "platform": {
+            "php": "8.0.0"
+        }
+    }
+}

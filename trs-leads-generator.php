@@ -62,3 +62,4 @@ function trs_run_leads_generator() {
 	$plugin->run();
 }
 trs_run_leads_generator();
+

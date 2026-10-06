@@ -13,8 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * The core plugin class.
  *
- * This is used to define internationalization, admin-specific hooks,
- * and public-facing site hooks.
+ * Coordinates internationalization, admin-specific hooks,
+ * REST API routes, frontend handlers and ads automation.
  */
 class TRS_Leads_Generator {
 
@@ -31,6 +31,34 @@ class TRS_Leads_Generator {
 	 * @var TRS_Admin
 	 */
 	private $admin;
+
+	/**
+	 * The meta boxes handler instance.
+	 *
+	 * @var TRS_Meta_Boxes
+	 */
+	private $meta_boxes;
+
+	/**
+	 * The frontend handler instance.
+	 *
+	 * @var TRS_Frontend
+	 */
+	private $frontend;
+
+	/**
+	 * The REST controller instance.
+	 *
+	 * @var TRS_REST_Controller
+	 */
+	private $rest_controller;
+
+	/**
+	 * The Ads automation instance.
+	 *
+	 * @var TRS_Ads_Automation
+	 */
+	private $ads_automation;
 
 	/**
 	 * Get the single instance of the class.
@@ -52,16 +80,32 @@ class TRS_Leads_Generator {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+		$this->define_rest_hooks();
 	}
 
 	/**
 	 * Load required dependencies.
 	 */
 	private function load_dependencies() {
+		// Autoload Composer dependencies (e.g. Dompdf).
+		if ( file_exists( TRS_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
+			require_once TRS_PLUGIN_DIR . 'vendor/autoload.php';
+		}
+
 		require_once TRS_PLUGIN_DIR . 'includes/class-trs-post-types.php';
+		require_once TRS_PLUGIN_DIR . 'includes/class-trs-meta-boxes.php';
+		require_once TRS_PLUGIN_DIR . 'includes/class-trs-frontend.php';
+		require_once TRS_PLUGIN_DIR . 'includes/class-trs-google-sheets.php';
+		require_once TRS_PLUGIN_DIR . 'includes/class-trs-pdf-generator.php';
+		require_once TRS_PLUGIN_DIR . 'includes/class-trs-ads-automation.php';
+		require_once TRS_PLUGIN_DIR . 'includes/class-trs-rest-controller.php';
 		require_once TRS_PLUGIN_DIR . 'admin/class-trs-admin.php';
 
-		$this->admin = new TRS_Admin();
+		$this->admin           = new TRS_Admin();
+		$this->meta_boxes      = new TRS_Meta_Boxes();
+		$this->frontend        = new TRS_Frontend();
+		$this->rest_controller = new TRS_REST_Controller();
+		$this->ads_automation  = new TRS_Ads_Automation();
 	}
 
 	/**
@@ -89,6 +133,10 @@ class TRS_Leads_Generator {
 		add_action( 'admin_menu', array( $this->admin, 'register_admin_menu' ) );
 		add_action( 'admin_init', array( $this->admin, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this->admin, 'enqueue_styles' ) );
+
+		// Initialize Meta Boxes & Ads Automation handlers.
+		$this->meta_boxes->init();
+		$this->ads_automation->init();
 	}
 
 	/**
@@ -96,6 +144,16 @@ class TRS_Leads_Generator {
 	 */
 	private function define_public_hooks() {
 		add_action( 'init', array( 'TRS_Post_Types', 'register_cpt' ) );
+
+		// Initialize Frontend shortcode and submission handler.
+		$this->frontend->init();
+	}
+
+	/**
+	 * Register REST API hooks.
+	 */
+	private function define_rest_hooks() {
+		add_action( 'rest_api_init', array( $this->rest_controller, 'register_routes' ) );
 	}
 
 	/**

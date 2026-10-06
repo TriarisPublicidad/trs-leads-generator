@@ -79,3 +79,4 @@ class TRS_Activator {
 		TRS_Post_Types::register_cpt();
 	}
 }
+

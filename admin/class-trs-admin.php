@@ -151,6 +151,60 @@ class TRS_Admin {
 			'trs-settings',
 			'trs_google_sheets_section'
 		);
+
+		// ==================== 4. Meta Ads API ====================
+		register_setting( 'trs_settings_group', 'trs_meta_access_token', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( 'trs_settings_group', 'trs_meta_ad_account_id', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+
+		add_settings_section(
+			'trs_meta_ads_section',
+			__( 'Configuración de Meta Ads (Facebook & Instagram)', 'trs-leads-generator' ),
+			array( $this, 'render_meta_ads_section_desc' ),
+			'trs-settings'
+		);
+
+		add_settings_field(
+			'trs_meta_access_token',
+			__( 'Meta System User Access Token', 'trs-leads-generator' ),
+			array( $this, 'render_meta_token_field' ),
+			'trs-settings',
+			'trs_meta_ads_section'
+		);
+
+		add_settings_field(
+			'trs_meta_ad_account_id',
+			__( 'ID de Cuenta Publicitaria (Ad Account ID)', 'trs-leads-generator' ),
+			array( $this, 'render_meta_ad_account_field' ),
+			'trs-settings',
+			'trs_meta_ads_section'
+		);
+
+		// ==================== 5. Google Ads API ====================
+		register_setting( 'trs_settings_group', 'trs_google_ads_customer_id', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( 'trs_settings_group', 'trs_google_ads_developer_token', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+
+		add_settings_section(
+			'trs_google_ads_section',
+			__( 'Configuración de Google Ads API', 'trs-leads-generator' ),
+			array( $this, 'render_google_ads_section_desc' ),
+			'trs-settings'
+		);
+
+		add_settings_field(
+			'trs_google_ads_customer_id',
+			__( 'Google Ads Customer ID', 'trs-leads-generator' ),
+			array( $this, 'render_google_ads_customer_field' ),
+			'trs-settings',
+			'trs_google_ads_section'
+		);
+
+		add_settings_field(
+			'trs_google_ads_developer_token',
+			__( 'Google Ads Developer Token', 'trs-leads-generator' ),
+			array( $this, 'render_google_ads_developer_token_field' ),
+			'trs-settings',
+			'trs_google_ads_section'
+		);
 	}
 
 	/**
@@ -320,6 +374,64 @@ class TRS_Admin {
 	}
 
 	/**
+	 * Meta Ads Section description.
+	 */
+	public function render_meta_ads_section_desc() {
+		echo '<p>' . esc_html__( 'Configura tu token de usuario del sistema (System User Token) de Meta Business Manager para permitir la generación automática de campañas de clientes potenciales (Lead Ads) en estado PAUSED.', 'trs-leads-generator' ) . '</p>';
+	}
+
+	/**
+	 * Render Meta Access Token field.
+	 */
+	public function render_meta_token_field() {
+		$value = get_option( 'trs_meta_access_token', '' );
+		?>
+		<input type="password" name="trs_meta_access_token" id="trs_meta_access_token" value="<?php echo esc_attr( $value ); ?>" class="large-text" placeholder="EAA..." autocomplete="new-password" />
+		<p class="description"><?php esc_html_e( 'Token con permisos ads_management y ads_read generado en Meta Business Manager.', 'trs-leads-generator' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Render Meta Ad Account ID field.
+	 */
+	public function render_meta_ad_account_field() {
+		$value = get_option( 'trs_meta_ad_account_id', '' );
+		?>
+		<input type="text" name="trs_meta_ad_account_id" id="trs_meta_ad_account_id" value="<?php echo esc_attr( $value ); ?>" class="regular-text" placeholder="act_1234567890" />
+		<p class="description"><?php esc_html_e( 'Identificador de la cuenta publicitaria con prefijo act_ (ej. act_987654321).', 'trs-leads-generator' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Google Ads Section description.
+	 */
+	public function render_google_ads_section_desc() {
+		echo '<p>' . esc_html__( 'Configura el identificador de cliente y token de desarrollador de Google Ads para estructurar campañas de búsqueda en estado borrador.', 'trs-leads-generator' ) . '</p>';
+	}
+
+	/**
+	 * Render Google Ads Customer ID field.
+	 */
+	public function render_google_ads_customer_field() {
+		$value = get_option( 'trs_google_ads_customer_id', '' );
+		?>
+		<input type="text" name="trs_google_ads_customer_id" id="trs_google_ads_customer_id" value="<?php echo esc_attr( $value ); ?>" class="regular-text" placeholder="123-456-7890" />
+		<p class="description"><?php esc_html_e( 'ID de cliente de Google Ads (10 dígitos sin guiones o con guiones).', 'trs-leads-generator' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Render Google Ads Developer Token field.
+	 */
+	public function render_google_ads_developer_token_field() {
+		$value = get_option( 'trs_google_ads_developer_token', '' );
+		?>
+		<input type="password" name="trs_google_ads_developer_token" id="trs_google_ads_developer_token" value="<?php echo esc_attr( $value ); ?>" class="regular-text" placeholder="Token de desarrollador" autocomplete="new-password" />
+		<p class="description"><?php esc_html_e( 'Developer Token asignado en el Google Ads API Center.', 'trs-leads-generator' ); ?></p>
+		<?php
+	}
+
+	/**
 	 * Render plugin dashboard page.
 	 *
 	 * @since 1.0.0
@@ -343,3 +455,4 @@ class TRS_Admin {
 		require_once TRS_PLUGIN_DIR . 'admin/partials/trs-admin-settings-display.php';
 	}
 }
+
