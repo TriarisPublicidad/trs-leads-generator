@@ -65,13 +65,36 @@ class TRS_PDF_Generator {
 			return new WP_Error( 'dompdf_missing', __( 'La librería Dompdf no está disponible.', 'trs-leads-generator' ) );
 		}
 
-		// Replace merge tags.
+		// Replace merge tags (both {{tag}} and {tag} styles).
+		$first_name = esc_html( $lead_data['first_name'] ?? 'Cliente' );
+		$last_name  = esc_html( $lead_data['last_name'] ?? '' );
+		$email      = esc_html( $lead_data['email'] ?? '' );
+		$phone      = esc_html( $lead_data['phone'] ?? '' );
+		$company    = esc_html( $lead_data['company'] ?? '' );
+		$job_title  = esc_html( $lead_data['job_title'] ?? '' );
+		$message    = esc_html( $lead_data['message'] ?? '' );
+		$date       = esc_html( current_time( 'd/m/Y' ) );
+		$form_title = esc_html( $lead_data['form_title'] ?? 'TRS Leads Generator' );
+
 		$tags = array(
-			'{{first_name}}' => esc_html( $lead_data['first_name'] ?? 'Cliente' ),
-			'{{last_name}}'  => esc_html( $lead_data['last_name'] ?? '' ),
-			'{{email}}'      => esc_html( $lead_data['email'] ?? '' ),
-			'{{date}}'       => esc_html( current_time( 'd/m/Y' ) ),
-			'{{form_title}}' => esc_html( $lead_data['form_title'] ?? 'TRS Leads Generator' ),
+			'{{first_name}}' => $first_name,
+			'{first_name}'   => $first_name,
+			'{{last_name}}'  => $last_name,
+			'{last_name}'    => $last_name,
+			'{{email}}'      => $email,
+			'{email}'        => $email,
+			'{{phone}}'      => $phone,
+			'{phone}'        => $phone,
+			'{{company}}'    => $company,
+			'{company}'      => $company,
+			'{{job_title}}'  => $job_title,
+			'{job_title}'    => $job_title,
+			'{{message}}'    => $message,
+			'{message}'      => $message,
+			'{{date}}'       => $date,
+			'{date}'         => $date,
+			'{{form_title}}' => $form_title,
+			'{form_title}'   => $form_title,
 		);
 		$parsed_html = str_replace( array_keys( $tags ), array_values( $tags ), $html_content );
 
@@ -221,5 +244,56 @@ class TRS_PDF_Generator {
 </body>
 </html>';
 	}
+
+	/**
+	 * Default base starter HTML for custom PDF text editor.
+	 *
+	 * @return string
+	 */
+	public static function get_default_html() {
+		return '<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: Helvetica, Arial, sans-serif; margin: 40px; color: #1e293b; line-height: 1.6; }
+  .header { border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 25px; }
+  h1 { color: #1e3a8a; font-size: 24px; margin: 0 0 10px 0; }
+  .meta { color: #64748b; font-size: 13px; }
+  .callout { background: #eff6ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; border-radius: 4px; }
+  .content { font-size: 14px; margin: 20px 0; }
+  .footer { margin-top: 45px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 11px; color: #94a3b8; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>{{form_title}}</h1>
+    <div class="meta">Documento preparado para: <strong>{{first_name}} {{last_name}}</strong> ({{email}}) | Fecha: {{date}}</div>
+  </div>
+
+  <div class="callout">
+    <strong>¡Bienvenido(a) {{first_name}}!</strong><br />
+    Gracias por registrarte. Este es tu recurso personalizado listo para su aplicación inmediata.
+  </div>
+
+  <div class="content">
+    <h2>Información y Contenido Exclusivo</h2>
+    <p>Puedes editar este contenido directamente en el panel de administración de tu formulario en WordPress. Utiliza etiquetas dinámicas para personalizar cada PDF que reciban tus contactos.</p>
+    <ul>
+      <li><strong>Contacto:</strong> {{first_name}} {{last_name}}</li>
+      <li><strong>Correo:</strong> {{email}}</li>
+      <li><strong>Teléfono:</strong> {{phone}}</li>
+      <li><strong>Institución / Empresa:</strong> {{company}}</li>
+      <li><strong>Cargo:</strong> {{job_title}}</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    Documento generado de forma automatizada por TRS Leads Generator &bull; {{date}}
+  </div>
+</body>
+</html>';
+	}
 }
+
 

@@ -78,6 +78,23 @@ $forms = get_posts(
 		</div>
 	<?php endif; ?>
 
+	<?php if ( $filter_form_id ) : ?>
+		<?php $filtered_form_title = get_the_title( $filter_form_id ) ?: ( 'ID #' . $filter_form_id ); ?>
+		<div class="notice notice-info" style="margin-top: 15px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+			<p style="margin: 0; font-size: 14px;">
+				📄 <strong><?php printf( esc_html__( 'Mostrando registrados exclusivamente del formulario: "%s"', 'trs-leads-generator' ), esc_html( $filtered_form_title ) ); ?></strong>
+			</p>
+			<div>
+				<a href="<?php echo esc_url( admin_url( 'post.php?post=' . $filter_form_id . '&action=edit' ) ); ?>" class="button button-small" style="margin-right: 6px;">
+					✏️ <?php esc_html_e( 'Editar Formulario', 'trs-leads-generator' ); ?>
+				</a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=trs-leads' ) ); ?>" class="button button-small">
+					✕ <?php esc_html_e( 'Ver todos los formularios', 'trs-leads-generator' ); ?>
+				</a>
+			</div>
+		</div>
+	<?php endif; ?>
+
 	<!-- Actions & Filters Bar -->
 	<div class="trs-admin-card" style="margin-top: 20px; padding: 16px 20px;">
 		<form method="GET" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
@@ -283,3 +300,4 @@ $forms = get_posts(
 		</div>
 	<?php endif; ?>
 </div>
+

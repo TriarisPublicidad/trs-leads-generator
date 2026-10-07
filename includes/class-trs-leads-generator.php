@@ -146,6 +146,10 @@ class TRS_Leads_Generator {
 		add_action( 'admin_post_trs_export_leads_csv', array( $this->admin, 'export_leads_csv' ) );
 		add_action( 'admin_post_trs_delete_lead', array( $this->admin, 'delete_lead' ) );
 
+		// PDF Preview Actions.
+		add_action( 'admin_post_trs_preview_pdf', array( $this->admin, 'handle_preview_pdf' ) );
+		add_action( 'wp_ajax_trs_preview_draft_pdf', array( $this->admin, 'ajax_preview_draft_pdf' ) );
+
 		// Initialize Meta Boxes & Ads Automation handlers.
 		$this->meta_boxes->init();
 		$this->ads_automation->init();

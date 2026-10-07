@@ -585,5 +585,116 @@ class TRS_Admin {
 		wp_safe_redirect( add_query_arg( array( 'page' => 'trs-leads', 'deleted' => '1' ), admin_url( 'admin.php' ) ) );
 		exit;
 	}
+
+	/**
+	 * Handle viewing/previewing the configured PDF for a form.
+	 *
+	 * @since 1.2.0
+	 */
+	public function handle_preview_pdf() {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_die( esc_html__( 'Acceso denegado.', 'trs-leads-generator' ) );
+		}
+
+		$post_id = isset( $_GET['post_id'] ) ? absint( $_GET['post_id'] ) : 0;
+		check_admin_referer( 'trs_preview_pdf_' . $post_id, 'trs_preview_nonce' );
+
+		if ( ! $post_id ) {
+			wp_die( esc_html__( 'ID de formulario no válido.', 'trs-leads-generator' ) );
+		}
+
+		$pdf_source = get_post_meta( $post_id, '_trs_form_pdf_source', true ) ?: 'media';
+
+		if ( 'external' === $pdf_source ) {
+			$url = get_post_meta( $post_id, '_trs_form_pdf_external_url', true );
+			if ( ! empty( $url ) ) {
+				wp_safe_redirect( $url );
+				exit;
+			}
+		} elseif ( 'page' === $pdf_source ) {
+			$page_id = (int) get_post_meta( $post_id, '_trs_form_pdf_page_id', true );
+			if ( $page_id ) {
+				$permalink = get_permalink( $page_id );
+				if ( $permalink ) {
+					wp_safe_redirect( $permalink );
+					exit;
+				}
+			}
+		} elseif ( 'media' === $pdf_source ) {
+			$res_id = (int) get_post_meta( $post_id, '_trs_form_pdf_resource', true );
+			if ( $res_id ) {
+				$url = wp_get_attachment_url( $res_id );
+				if ( $url ) {
+					wp_safe_redirect( $url );
+					exit;
+				}
+			}
+		}
+
+		// Dynamic generation using Dompdf with sample data
+		require_once TRS_PLUGIN_DIR . 'includes/class-trs-pdf-generator.php';
+		$content = get_post_meta( $post_id, '_trs_form_pdf_content', true );
+		if ( empty( $content ) ) {
+			$content = TRS_PDF_Generator::get_default_html();
+		}
+
+		$sample_lead = array(
+			'first_name' => 'Juan',
+			'last_name'  => 'Pérez',
+			'email'      => 'juan.perez@ejemplo.com',
+			'phone'      => '+57 300 123 4567',
+			'company'    => 'Triaris Publicidad',
+			'job_title'  => 'Director General',
+			'message'    => 'Muestra de solicitud de prueba.',
+			'form_title' => get_the_title( $post_id ) ?: 'Formulario de Prueba',
+		);
+
+		$pdf = TRS_PDF_Generator::generate_pdf( $content, $sample_lead, 'muestra-preview-' . $post_id );
+		if ( is_wp_error( $pdf ) ) {
+			wp_die( esc_html( $pdf->get_error_message() ) );
+		}
+
+		wp_safe_redirect( $pdf['file_url'] );
+		exit;
+	}
+
+	/**
+	 * AJAX endpoint to preview draft PDF content from admin text editor.
+	 *
+	 * @since 1.2.0
+	 */
+	public function ajax_preview_draft_pdf() {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Acceso denegado.', 'trs-leads-generator' ) ), 403 );
+		}
+
+		check_ajax_referer( 'trs_preview_draft_pdf_nonce', 'security' );
+
+		$post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+		$content = isset( $_POST['content'] ) ? wp_unslash( $_POST['content'] ) : '';
+
+		require_once TRS_PLUGIN_DIR . 'includes/class-trs-pdf-generator.php';
+		if ( empty( $content ) ) {
+			$content = TRS_PDF_Generator::get_default_html();
+		}
+
+		$sample_lead = array(
+			'first_name' => 'Juan',
+			'last_name'  => 'Pérez',
+			'email'      => 'juan.perez@ejemplo.com',
+			'phone'      => '+57 300 123 4567',
+			'company'    => 'Triaris Publicidad',
+			'job_title'  => 'Director General',
+			'message'    => 'Muestra de solicitud en tiempo real.',
+			'form_title' => $post_id ? get_the_title( $post_id ) : 'Vista Previa TRS Leads',
+		);
+
+		$pdf = TRS_PDF_Generator::generate_pdf( $content, $sample_lead, 'muestra-preview-' . ( $post_id ?: 'borrador' ) );
+		if ( is_wp_error( $pdf ) ) {
+			wp_send_json_error( array( 'message' => $pdf->get_error_message() ) );
+		}
+
+		wp_send_json_success( array( 'pdf_url' => $pdf['file_url'] ) );
+	}
 }
 

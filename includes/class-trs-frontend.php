@@ -81,6 +81,47 @@ class TRS_Frontend {
 	}
 
 	/**
+	 * Retrieve cover image URL based on selected source (media, external URL, or page/post).
+	 *
+	 * @param int $form_id Form post ID.
+	 * @return string
+	 */
+	public static function get_form_cover_url( $form_id ) {
+		$cover_source = get_post_meta( $form_id, '_trs_form_cover_source', true ) ?: 'media';
+
+		if ( 'external' === $cover_source ) {
+			$url = get_post_meta( $form_id, '_trs_form_cover_external_url', true );
+			if ( ! empty( $url ) ) {
+				return esc_url( $url );
+			}
+		} elseif ( 'post' === $cover_source ) {
+			$target_id = (int) get_post_meta( $form_id, '_trs_form_cover_post_id', true );
+			if ( $target_id && has_post_thumbnail( $target_id ) ) {
+				$thumb_url = get_the_post_thumbnail_url( $target_id, 'large' );
+				if ( $thumb_url ) {
+					return $thumb_url;
+				}
+			}
+		}
+
+		$cover_image_id = (int) get_post_meta( $form_id, '_trs_form_cover_image', true );
+		if ( $cover_image_id ) {
+			$img = wp_get_attachment_image_url( $cover_image_id, 'large' );
+			if ( $img ) {
+				return $img;
+			}
+		}
+
+		// Fallback check if external URL was entered without switching source.
+		$ext_url = get_post_meta( $form_id, '_trs_form_cover_external_url', true );
+		if ( ! empty( $ext_url ) ) {
+			return esc_url( $ext_url );
+		}
+
+		return '';
+	}
+
+	/**
 	 * Shortcode: [trs_leads_generator_image id="X"]
 	 * Renders only the cover image component.
 	 *
@@ -107,12 +148,7 @@ class TRS_Frontend {
 			return '<!-- [TRS Leads Generator Image] Error: Formulario no válido -->';
 		}
 
-		$cover_image_id = (int) get_post_meta( $form_id, '_trs_form_cover_image', true );
-		if ( ! $cover_image_id ) {
-			return '';
-		}
-
-		$cover_image_url = wp_get_attachment_image_url( $cover_image_id, 'large' );
+		$cover_image_url = self::get_form_cover_url( $form_id );
 		if ( ! $cover_image_url ) {
 			return '';
 		}
@@ -185,8 +221,7 @@ class TRS_Frontend {
 		$type             = get_post_meta( $form_id, '_trs_form_type', true ) ?: 'performance';
 		$captcha_enabled  = (bool) get_post_meta( $form_id, '_trs_form_captcha', true );
 		$terms_enabled    = (bool) get_post_meta( $form_id, '_trs_form_terms', true );
-		$cover_image_id   = (int) get_post_meta( $form_id, '_trs_form_cover_image', true );
-		$cover_image_url  = $cover_image_id ? wp_get_attachment_image_url( $cover_image_id, 'large' ) : '';
+		$cover_image_url  = self::get_form_cover_url( $form_id );
 
 		// Dynamic active fields.
 		$field_phone     = (bool) get_post_meta( $form_id, '_trs_field_phone', true );
@@ -534,32 +569,63 @@ class TRS_Frontend {
 		);
 
 		if ( 'lead_magnet' === $type ) {
-			$pdf_template = get_post_meta( $form_id, '_trs_form_pdf_template', true );
+			$pdf_source = get_post_meta( $form_id, '_trs_form_pdf_source', true ) ?: 'media';
 
-			// Generación dinámica con Dompdf si hay plantilla seleccionada.
-			if ( ! empty( $pdf_template ) ) {
+			if ( 'dynamic' === $pdf_source ) {
+				$pdf_content = get_post_meta( $form_id, '_trs_form_pdf_content', true );
+				if ( empty( $pdf_content ) ) {
+					require_once TRS_PLUGIN_DIR . 'includes/class-trs-pdf-generator.php';
+					$pdf_content = TRS_PDF_Generator::get_default_html();
+				}
+
 				require_once TRS_PLUGIN_DIR . 'includes/class-trs-pdf-generator.php';
-				$templates = TRS_PDF_Generator::get_templates();
-				if ( isset( $templates[ $pdf_template ] ) ) {
-					$lead_data['form_title'] = $post->post_title;
-					$pdf_result = TRS_PDF_Generator::generate_pdf(
-						$templates[ $pdf_template ]['html'],
-						$lead_data,
-						sanitize_title( $post->post_title )
-					);
-					if ( ! is_wp_error( $pdf_result ) && ! empty( $pdf_result['file_url'] ) ) {
-						$response['download_url'] = $pdf_result['file_url'];
-						$response['message']      = __( '¡Registro exitoso! Tu recurso PDF personalizado ha sido compilado y está listo para descargar.', 'trs-leads-generator' );
+				$lead_data['form_title'] = $post->post_title;
+				$pdf_result = TRS_PDF_Generator::generate_pdf(
+					$pdf_content,
+					$lead_data,
+					sanitize_title( $post->post_title )
+				);
+
+				if ( ! is_wp_error( $pdf_result ) && ! empty( $pdf_result['file_url'] ) ) {
+					$response['download_url'] = $pdf_result['file_url'];
+					$response['message']      = __( '¡Registro exitoso! Tu recurso PDF personalizado ha sido compilado y está listo para descargar.', 'trs-leads-generator' );
+				}
+			} elseif ( 'external' === $pdf_source ) {
+				$ext_pdf = get_post_meta( $form_id, '_trs_form_pdf_external_url', true );
+				if ( ! empty( $ext_pdf ) ) {
+					$response['download_url'] = esc_url_raw( $ext_pdf );
+					$response['message']      = __( '¡Registro exitoso! Tu recurso PDF está listo para descargar.', 'trs-leads-generator' );
+				}
+			} elseif ( 'page' === $pdf_source ) {
+				$page_id = (int) get_post_meta( $form_id, '_trs_form_pdf_page_id', true );
+				if ( $page_id ) {
+					$perm = get_permalink( $page_id );
+					if ( $perm ) {
+						$response['download_url'] = esc_url_raw( $perm );
+						$response['message']      = __( '¡Registro exitoso! Accede a tu recurso a continuación.', 'trs-leads-generator' );
+					}
+				}
+			} else {
+				// Media Library or default static resource
+				if ( $pdf_resource_id ) {
+					$download_url = wp_get_attachment_url( $pdf_resource_id );
+					if ( $download_url ) {
+						$response['download_url'] = $download_url;
+						$response['message']      = __( '¡Registro exitoso! Tu recurso PDF está listo para descargar.', 'trs-leads-generator' );
 					}
 				}
 			}
 
-			// Fallback a recurso PDF estático si no se usó o falló la plantilla.
-			if ( empty( $response['download_url'] ) && $pdf_resource_id ) {
-				$download_url = wp_get_attachment_url( $pdf_resource_id );
-				if ( $download_url ) {
-					$response['download_url'] = $download_url;
-					$response['message']      = __( '¡Registro exitoso! Tu recurso PDF está listo para descargar.', 'trs-leads-generator' );
+			// Fallback: if download_url is still empty, check if static or external was provided.
+			if ( empty( $response['download_url'] ) ) {
+				$fallback_pdf_id = (int) get_post_meta( $form_id, '_trs_form_pdf_resource', true );
+				if ( $fallback_pdf_id ) {
+					$response['download_url'] = wp_get_attachment_url( $fallback_pdf_id );
+				} else {
+					$fallback_ext = get_post_meta( $form_id, '_trs_form_pdf_external_url', true );
+					if ( ! empty( $fallback_ext ) ) {
+						$response['download_url'] = esc_url_raw( $fallback_ext );
+					}
 				}
 			}
 		} elseif ( ( 'performance' === $type || 'event' === $type ) && ! empty( $confirmation_url ) ) {
