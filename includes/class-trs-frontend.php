@@ -218,7 +218,7 @@ class TRS_Frontend {
 			<?php endif; ?>
 
 			<div class="trs-form-header">
-				<h3 class="trs-form-title"><?php echo esc_html( $post->post_title ); ?></h3>
+				<h3 class="trs-form-title" style="display: none;">  <?php echo esc_html( $post->post_title ); ?></h3>
 				<?php if ( ! empty( $post->post_content ) ) : ?>
 					<div class="trs-form-desc"><?php echo wp_kses_post( wpautop( $post->post_content ) ); ?></div>
 				<?php endif; ?>
@@ -466,6 +466,33 @@ class TRS_Frontend {
 			),
 			array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
+
+		if ( false === $inserted ) {
+			// Auto-repair missing table/columns and retry insertion once.
+			require_once TRS_PLUGIN_DIR . 'includes/class-trs-activator.php';
+			TRS_Activator::create_tables();
+
+			$inserted = $wpdb->insert(
+				$table_name,
+				array(
+					'form_id'      => $form_id,
+					'email'        => $email,
+					'first_name'   => $first_name,
+					'last_name'    => $last_name,
+					'phone'        => $phone,
+					'company'      => $company,
+					'job_title'    => $job_title,
+					'message'      => $message,
+					'utm_source'   => $utm_source,
+					'utm_medium'   => $utm_medium,
+					'utm_campaign' => $utm_campaign,
+					'utm_content'  => $utm_content,
+					'utm_term'     => $utm_term,
+					'created_at'   => $created_at,
+				),
+				array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
+			);
+		}
 
 		if ( false === $inserted ) {
 			error_log( '[TRS Leads Generator] Error al insertar lead: ' . $wpdb->last_error );

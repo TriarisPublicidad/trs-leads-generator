@@ -71,6 +71,23 @@ class TRS_Activator {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+
+		// Ensure columns exist on existing installations where dbDelta did not alter.
+		$existing_cols = $wpdb->get_col( "DESC {$table_name}", 0 );
+		if ( is_array( $existing_cols ) && ! empty( $existing_cols ) ) {
+			if ( ! in_array( 'phone', $existing_cols, true ) ) {
+				$wpdb->query( "ALTER TABLE {$table_name} ADD COLUMN phone varchar(50) DEFAULT '' NOT NULL AFTER last_name" );
+			}
+			if ( ! in_array( 'company', $existing_cols, true ) ) {
+				$wpdb->query( "ALTER TABLE {$table_name} ADD COLUMN company varchar(150) DEFAULT '' NOT NULL AFTER phone" );
+			}
+			if ( ! in_array( 'job_title', $existing_cols, true ) ) {
+				$wpdb->query( "ALTER TABLE {$table_name} ADD COLUMN job_title varchar(150) DEFAULT '' NOT NULL AFTER company" );
+			}
+			if ( ! in_array( 'message', $existing_cols, true ) ) {
+				$wpdb->query( "ALTER TABLE {$table_name} ADD COLUMN message text NOT NULL AFTER job_title" );
+			}
+		}
 	}
 
 	/**

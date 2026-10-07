@@ -63,6 +63,16 @@ class TRS_Admin {
 			array( $this, 'render_dashboard_page' )
 		);
 
+		// Submenu: Leads Capturados (Punto de visualización de registros).
+		add_submenu_page(
+			'trs-leads-generator',
+			__( 'Leads Capturados', 'trs-leads-generator' ),
+			__( 'Leads Capturados', 'trs-leads-generator' ),
+			'manage_options',
+			'trs-leads',
+			array( $this, 'render_leads_page' )
+		);
+
 		// Submenu: Ajustes.
 		add_submenu_page(
 			'trs-leads-generator',
@@ -453,6 +463,127 @@ class TRS_Admin {
 			return;
 		}
 		require_once TRS_PLUGIN_DIR . 'admin/partials/trs-admin-settings-display.php';
+	}
+
+	/**
+	 * Render leads list page (visualización de leads capturados).
+	 *
+	 * @since 1.1.0
+	 */
+	public function render_leads_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		require_once TRS_PLUGIN_DIR . 'admin/partials/trs-admin-leads-display.php';
+	}
+
+	/**
+	 * Handle CSV Export for captured leads.
+	 *
+	 * @since 1.1.0
+	 */
+	public function export_leads_csv() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Acceso denegado.', 'trs-leads-generator' ) );
+		}
+
+		check_admin_referer( 'trs_export_leads_action', 'trs_export_nonce' );
+
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'trs_leads';
+
+		$form_id = isset( $_GET['form_id'] ) ? absint( $_GET['form_id'] ) : 0;
+		$where   = '';
+		if ( $form_id ) {
+			$where = $wpdb->prepare( 'WHERE form_id = %d', $form_id );
+		}
+
+		$leads = $wpdb->get_results( "SELECT * FROM {$table_name} {$where} ORDER BY id DESC", ARRAY_A );
+
+		$filename = 'trs-leads-export-' . gmdate( 'Y-m-d' ) . '.csv';
+
+		header( 'Content-Type: text/csv; charset=UTF-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: 0' );
+
+		$output = fopen( 'php://output', 'w' );
+		// Output UTF-8 BOM so Excel opens accents cleanly.
+		fprintf( $output, chr( 0xEF ) . chr( 0xBB ) . chr( 0xBF ) );
+
+		// Header row
+		fputcsv(
+			$output,
+			array(
+				'ID',
+				'ID Formulario',
+				'Formulario',
+				'Email',
+				'Nombre',
+				'Apellido',
+				'Teléfono',
+				'Institución',
+				'Cargo',
+				'Mensaje',
+				'UTM Source',
+				'UTM Medium',
+				'UTM Campaign',
+				'UTM Content',
+				'UTM Term',
+				'Fecha de Registro',
+			)
+		);
+
+		if ( ! empty( $leads ) ) {
+			foreach ( $leads as $lead ) {
+				$form_title = $lead['form_id'] ? get_the_title( $lead['form_id'] ) : 'N/A';
+				fputcsv(
+					$output,
+					array(
+						$lead['id'] ?? '',
+						$lead['form_id'] ?? '',
+						$form_title,
+						$lead['email'] ?? '',
+						$lead['first_name'] ?? '',
+						$lead['last_name'] ?? '',
+						$lead['phone'] ?? '',
+						$lead['company'] ?? '',
+						$lead['job_title'] ?? '',
+						$lead['message'] ?? '',
+						$lead['utm_source'] ?? '',
+						$lead['utm_medium'] ?? '',
+						$lead['utm_campaign'] ?? '',
+						$lead['utm_content'] ?? '',
+						$lead['utm_term'] ?? '',
+						$lead['created_at'] ?? '',
+					)
+				);
+			}
+		}
+
+		fclose( $output );
+		exit;
+	}
+
+	/**
+	 * Handle deleting a lead.
+	 *
+	 * @since 1.1.0
+	 */
+	public function delete_lead() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Acceso denegado.', 'trs-leads-generator' ) );
+		}
+
+		$lead_id = isset( $_GET['lead_id'] ) ? absint( $_GET['lead_id'] ) : 0;
+		check_admin_referer( 'trs_delete_lead_' . $lead_id );
+
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'trs_leads';
+		$wpdb->delete( $table_name, array( 'id' => $lead_id ), array( '%d' ) );
+
+		wp_safe_redirect( add_query_arg( array( 'page' => 'trs-leads', 'deleted' => '1' ), admin_url( 'admin.php' ) ) );
+		exit;
 	}
 }
 

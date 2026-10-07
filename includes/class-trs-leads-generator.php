@@ -106,6 +106,14 @@ class TRS_Leads_Generator {
 		$this->frontend        = new TRS_Frontend();
 		$this->rest_controller = new TRS_REST_Controller();
 		$this->ads_automation  = new TRS_Ads_Automation();
+
+		// Auto-check and migrate database schema to include new columns if needed.
+		$installed_db_ver = get_option( 'trs_db_version', '1.0.0' );
+		if ( version_compare( $installed_db_ver, '1.1.0', '<' ) ) {
+			require_once TRS_PLUGIN_DIR . 'includes/class-trs-activator.php';
+			TRS_Activator::create_tables();
+			update_option( 'trs_db_version', '1.1.0' );
+		}
 	}
 
 	/**
@@ -133,6 +141,10 @@ class TRS_Leads_Generator {
 		add_action( 'admin_menu', array( $this->admin, 'register_admin_menu' ) );
 		add_action( 'admin_init', array( $this->admin, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this->admin, 'enqueue_styles' ) );
+
+		// CSV Export & Lead Management Actions.
+		add_action( 'admin_post_trs_export_leads_csv', array( $this->admin, 'export_leads_csv' ) );
+		add_action( 'admin_post_trs_delete_lead', array( $this->admin, 'delete_lead' ) );
 
 		// Initialize Meta Boxes & Ads Automation handlers.
 		$this->meta_boxes->init();
