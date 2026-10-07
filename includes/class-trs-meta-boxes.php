@@ -140,6 +140,76 @@ class TRS_Meta_Boxes {
 					</td>
 				</tr>
 
+				<!-- 3.1 Campos del Formulario (Configuración dinámica) -->
+				<?php
+				$field_phone     = (bool) get_post_meta( $post->ID, '_trs_field_phone', true );
+				$field_company   = (bool) get_post_meta( $post->ID, '_trs_field_company', true );
+				$field_job_title = (bool) get_post_meta( $post->ID, '_trs_field_job_title', true );
+				$field_message   = (bool) get_post_meta( $post->ID, '_trs_field_message', true );
+				?>
+				<tr>
+					<th scope="row">
+						<label><?php esc_html_e( 'Campos del Formulario', 'trs-leads-generator' ); ?></label>
+					</th>
+					<td>
+						<fieldset style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px;">
+							<legend style="font-weight: 600; color: #1e293b; padding: 0 6px;">
+								<?php esc_html_e( 'Selecciona los campos a solicitar:', 'trs-leads-generator' ); ?>
+							</legend>
+
+							<p style="margin-top: 4px; color: #64748b; font-size: 13px;">
+								<em><?php esc_html_e( '📌 Nota: Si un campo se activa, es obligatorio por defecto para el lead.', 'trs-leads-generator' ); ?></em>
+							</p>
+
+							<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 10px;">
+								<!-- Fijos e Inalterables -->
+								<label style="cursor: not-allowed; color: #334155;">
+									<input type="checkbox" checked="checked" disabled="disabled" />
+									<strong><?php esc_html_e( 'Nombre', 'trs-leads-generator' ); ?></strong>
+									<span style="color: #ef4444;">*</span> <small style="color: #94a3b8;">(Requerido)</small>
+								</label>
+
+								<label style="cursor: not-allowed; color: #334155;">
+									<input type="checkbox" checked="checked" disabled="disabled" />
+									<strong><?php esc_html_e( 'Apellido', 'trs-leads-generator' ); ?></strong>
+									<span style="color: #ef4444;">*</span> <small style="color: #94a3b8;">(Requerido)</small>
+								</label>
+
+								<label style="cursor: not-allowed; color: #334155;">
+									<input type="checkbox" checked="checked" disabled="disabled" />
+									<strong><?php esc_html_e( 'Correo Electrónico', 'trs-leads-generator' ); ?></strong>
+									<span style="color: #ef4444;">*</span> <small style="color: #94a3b8;">(Requerido)</small>
+								</label>
+
+								<!-- Opcionales a activar -->
+								<label style="cursor: pointer; color: #1e293b;">
+									<input type="checkbox" name="trs_field_phone" value="1" <?php checked( $field_phone, true ); ?> />
+									<strong><?php esc_html_e( 'Teléfono / WhatsApp', 'trs-leads-generator' ); ?></strong>
+									<span style="color: #ef4444;">*</span>
+								</label>
+
+								<label style="cursor: pointer; color: #1e293b;">
+									<input type="checkbox" name="trs_field_company" value="1" <?php checked( $field_company, true ); ?> />
+									<strong><?php esc_html_e( 'Institución', 'trs-leads-generator' ); ?></strong>
+									<span style="color: #ef4444;">*</span>
+								</label>
+
+								<label style="cursor: pointer; color: #1e293b;">
+									<input type="checkbox" name="trs_field_job_title" value="1" <?php checked( $field_job_title, true ); ?> />
+									<strong><?php esc_html_e( 'Cargo', 'trs-leads-generator' ); ?></strong>
+									<span style="color: #ef4444;">*</span>
+								</label>
+
+								<label style="cursor: pointer; color: #1e293b;">
+									<input type="checkbox" name="trs_field_message" value="1" <?php checked( $field_message, true ); ?> />
+									<strong><?php esc_html_e( 'Mensaje / Comentarios', 'trs-leads-generator' ); ?></strong>
+									<span style="color: #ef4444;">*</span>
+								</label>
+							</div>
+						</fieldset>
+					</td>
+				</tr>
+
 				<!-- 4. Página Web Asociada -->
 				<tr>
 					<th scope="row">
@@ -228,16 +298,47 @@ class TRS_Meta_Boxes {
 	}
 
 	/**
-	 * Render the side meta box displaying the shortcode.
+	 * Render the side meta box displaying modular shortcodes.
 	 *
 	 * @param WP_Post $post Current post object.
 	 */
 	public function render_shortcode_metabox( $post ) {
-		$shortcode = '[trs_form id="' . esc_attr( (string) $post->ID ) . '"]';
+		$form_id = esc_attr( (string) $post->ID );
 		?>
-		<p><?php esc_html_e( 'Copia este shortcode y pégalo en cualquier página, entrada o bloque HTML:', 'trs-leads-generator' ); ?></p>
-		<input type="text" readonly="readonly" value="<?php echo esc_attr( $shortcode ); ?>" class="large-text code" onclick="this.select();" />
-		<p class="description"><?php esc_html_e( 'Haz clic para seleccionar y copiar.', 'trs-leads-generator' ); ?></p>
+		<div style="margin-bottom: 14px;">
+			<label style="font-weight: 600; display: block; margin-bottom: 4px;">
+				📋 <?php esc_html_e( '1. Solo Formulario:', 'trs-leads-generator' ); ?>
+			</label>
+			<input type="text" readonly="readonly" value="[trs_leads_generator_form id=&quot;<?php echo $form_id; ?>&quot;]" class="large-text code" onclick="this.select();" />
+			<p class="description" style="margin-top: 2px;">
+				<?php esc_html_e( 'Renderiza solo los inputs y botón de envío.', 'trs-leads-generator' ); ?>
+			</p>
+		</div>
+
+		<div style="margin-bottom: 14px;">
+			<label style="font-weight: 600; display: block; margin-bottom: 4px;">
+				🖼️ <?php esc_html_e( '2. Solo Imagen de Portada:', 'trs-leads-generator' ); ?>
+			</label>
+			<input type="text" readonly="readonly" value="[trs_leads_generator_image id=&quot;<?php echo $form_id; ?>&quot;]" class="large-text code" onclick="this.select();" />
+			<p class="description" style="margin-top: 2px;">
+				<?php esc_html_e( 'Renderiza solo la imagen configurada.', 'trs-leads-generator' ); ?>
+			</p>
+		</div>
+
+		<div>
+			<label style="font-weight: 600; display: block; margin-bottom: 4px;">
+				📦 <?php esc_html_e( '3. Componente Completo:', 'trs-leads-generator' ); ?>
+			</label>
+			<input type="text" readonly="readonly" value="[trs_form id=&quot;<?php echo $form_id; ?>&quot;]" class="large-text code" onclick="this.select();" />
+			<p class="description" style="margin-top: 2px;">
+				<?php esc_html_e( 'Renderiza imagen + formulario juntos.', 'trs-leads-generator' ); ?>
+			</p>
+		</div>
+
+		<hr style="margin: 14px 0; border: 0; border-top: 1px solid #e2e8f0;" />
+		<p class="description">
+			💡 <em><?php esc_html_e( 'Puedes colocar los shortcodes en diferentes columnas o bloques según tu diseño.', 'trs-leads-generator' ); ?></em>
+		</p>
 		<?php
 	}
 
@@ -278,6 +379,17 @@ class TRS_Meta_Boxes {
 		// 3. Términos
 		$terms = ! empty( $_POST['trs_form_terms'] ) ? 1 : 0;
 		update_post_meta( $post_id, '_trs_form_terms', $terms );
+
+		// 3.1 Campos Activos del Formulario (Obligatorios por defecto si se marcan)
+		$phone     = ! empty( $_POST['trs_field_phone'] ) ? 1 : 0;
+		$company   = ! empty( $_POST['trs_field_company'] ) ? 1 : 0;
+		$job_title = ! empty( $_POST['trs_field_job_title'] ) ? 1 : 0;
+		$message   = ! empty( $_POST['trs_field_message'] ) ? 1 : 0;
+
+		update_post_meta( $post_id, '_trs_field_phone', $phone );
+		update_post_meta( $post_id, '_trs_field_company', $company );
+		update_post_meta( $post_id, '_trs_field_job_title', $job_title );
+		update_post_meta( $post_id, '_trs_field_message', $message );
 
 		// 4. Página Asociada
 		$associated = isset( $_POST['trs_form_associated_page'] ) ? sanitize_text_field( wp_unslash( $_POST['trs_form_associated_page'] ) ) : '';

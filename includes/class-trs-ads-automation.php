@@ -324,3 +324,4 @@ class TRS_Ads_Automation {
 		error_log( '[TRS Ads Automation] ' . $message );
 	}
 }
+

@@ -175,3 +175,19 @@
 		transform: rotate(360deg);
 	}
 }
+
+.trs-image-container {
+	max-width: 600px;
+	margin: 20px auto;
+	text-align: center;
+}
+
+.trs-cover-image {
+	max-width: 100%;
+	height: auto;
+	border-radius: 10px;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+	display: block;
+	margin: 0 auto;
+}
+

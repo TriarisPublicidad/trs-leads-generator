@@ -151,6 +151,13 @@ class TRS_REST_Controller extends WP_REST_Controller {
 				'type'        => 'integer',
 				'default'     => 0,
 			),
+			'fields' => array(
+				'description' => __( 'Lista de campos opcionales a activar (phone, company, job_title, message). Si se activan, serán obligatorios.', 'trs-leads-generator' ),
+				'type'        => 'array',
+				'items'       => array( 'type' => 'string' ),
+				'required'    => false,
+				'default'     => array(),
+			),
 		);
 	}
 
@@ -255,18 +262,27 @@ class TRS_REST_Controller extends WP_REST_Controller {
 		update_post_meta( $post_id, '_trs_form_cover_image', $cover_id );
 		update_post_meta( $post_id, '_trs_form_pdf_resource', $pdf_id );
 
+		// Optional fields (phone, company, job_title, message).
+		$fields = is_array( $params['fields'] ?? null ) ? $params['fields'] : array();
+		update_post_meta( $post_id, '_trs_field_phone', in_array( 'phone', $fields, true ) ? 1 : 0 );
+		update_post_meta( $post_id, '_trs_field_company', in_array( 'company', $fields, true ) ? 1 : 0 );
+		update_post_meta( $post_id, '_trs_field_job_title', in_array( 'job_title', $fields, true ) ? 1 : 0 );
+		update_post_meta( $post_id, '_trs_field_message', in_array( 'message', $fields, true ) ? 1 : 0 );
+
 		// 5. Build and return structured response.
 		$response_data = array(
 			'success'   => true,
 			'message'   => __( 'Formulario creado exitosamente en estado borrador.', 'trs-leads-generator' ),
 			'data'      => array(
-				'id'               => $post_id,
-				'title'            => $title,
-				'status'           => 'draft',
-				'type'             => $type,
-				'shortcode'        => sprintf( '[trs_form id="%d"]', $post_id ),
-				'edit_url'         => admin_url( sprintf( 'post.php?post=%d&action=edit', $post_id ) ),
-				'created_at'       => current_time( 'mysql' ),
+				'id'                   => $post_id,
+				'title'                => $title,
+				'status'               => 'draft',
+				'type'                 => $type,
+				'shortcode'            => sprintf( '[trs_form id="%d"]', $post_id ),
+				'shortcode_form'       => sprintf( '[trs_leads_generator_form id="%d"]', $post_id ),
+				'shortcode_image'      => sprintf( '[trs_leads_generator_image id="%d"]', $post_id ),
+				'edit_url'             => admin_url( sprintf( 'post.php?post=%d&action=edit', $post_id ) ),
+				'created_at'           => current_time( 'mysql' ),
 			),
 		);
 
@@ -366,8 +382,12 @@ class TRS_REST_Controller extends WP_REST_Controller {
 			$content .= '<!-- /wp:paragraph -->' . "\n";
 		}
 
-		// Cover Image
-		if ( ! empty( $cover_url ) ) {
+		// Cover Image (Modular Shortcode)
+		if ( ! empty( $cover_id ) ) {
+			$content .= '<!-- wp:shortcode -->' . "\n";
+			$content .= sprintf( '[trs_leads_generator_image id="%d"]', $form_id ) . "\n";
+			$content .= '<!-- /wp:shortcode -->' . "\n";
+		} elseif ( ! empty( $cover_url ) ) {
 			$content .= '<!-- wp:image {"align":"center","sizeSlug":"large","linkDestination":"none"} -->' . "\n";
 			$content .= '<figure class="wp-block-image aligncenter size-large"><img src="' . esc_url( $cover_url ) . '" alt="' . esc_attr( $headline ) . '" style="border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,0.1);max-height:420px;object-fit:cover;"/></figure>' . "\n";
 			$content .= '<!-- /wp:image -->' . "\n";
@@ -384,9 +404,9 @@ class TRS_REST_Controller extends WP_REST_Controller {
 			$content .= '<!-- /wp:list -->' . "\n";
 		}
 
-		// Embedded Form Shortcode
+		// Embedded Form Shortcode (Modular Shortcode)
 		$content .= '<!-- wp:shortcode -->' . "\n";
-		$content .= sprintf( '[trs_form id="%d"]', $form_id ) . "\n";
+		$content .= sprintf( '[trs_leads_generator_form id="%d"]', $form_id ) . "\n";
 		$content .= '<!-- /wp:shortcode -->' . "\n";
 
 		$content .= '</div>' . "\n";
@@ -420,13 +440,15 @@ class TRS_REST_Controller extends WP_REST_Controller {
 				'success' => true,
 				'message' => __( 'Landing page creada e integrada exitosamente con el formulario.', 'trs-leads-generator' ),
 				'data'    => array(
-					'page_id'    => $page_id,
-					'title'      => $page_title,
-					'status'     => $status,
-					'permalink'  => $permalink,
-					'edit_url'   => admin_url( sprintf( 'post.php?post=%d&action=edit', $page_id ) ),
-					'form_id'    => $form_id,
-					'shortcode'  => sprintf( '[trs_form id="%d"]', $form_id ),
+					'page_id'         => $page_id,
+					'title'           => $page_title,
+					'status'          => $status,
+					'permalink'       => $permalink,
+					'edit_url'        => admin_url( sprintf( 'post.php?post=%d&action=edit', $page_id ) ),
+					'form_id'         => $form_id,
+					'shortcode_form'  => sprintf( '[trs_leads_generator_form id="%d"]', $form_id ),
+					'shortcode_image' => sprintf( '[trs_leads_generator_image id="%d"]', $form_id ),
+					'shortcode'       => sprintf( '[trs_form id="%d"]', $form_id ),
 				),
 			),
 			201

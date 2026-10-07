@@ -40,7 +40,7 @@ class TRS_Activator {
 	 *
 	 * @since 1.0.0
 	 */
-	private static function create_tables() {
+	public static function create_tables() {
 		global $wpdb;
 
 		$table_name      = $wpdb->prefix . 'trs_leads';
@@ -53,6 +53,10 @@ class TRS_Activator {
 			email varchar(100) NOT NULL,
 			first_name varchar(100) DEFAULT '' NOT NULL,
 			last_name varchar(100) DEFAULT '' NOT NULL,
+			phone varchar(50) DEFAULT '' NOT NULL,
+			company varchar(150) DEFAULT '' NOT NULL,
+			job_title varchar(150) DEFAULT '' NOT NULL,
+			message text NOT NULL,
 			utm_source varchar(100) DEFAULT '' NOT NULL,
 			utm_medium varchar(100) DEFAULT '' NOT NULL,
 			utm_campaign varchar(150) DEFAULT '' NOT NULL,

@@ -222,3 +222,4 @@ class TRS_PDF_Generator {
 </html>';
 	}
 }
+

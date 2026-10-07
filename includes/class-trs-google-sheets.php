@@ -48,13 +48,17 @@ class TRS_Google_Sheets {
 			return $access_token;
 		}
 
-		// 2. Prepare Row Data to append.
+		// 2. Prepare Row Data to append (15 columns).
 		$row = array(
 			$lead_data['id'] ?? '',
 			$lead_data['form_id'] ?? '',
 			$lead_data['email'] ?? '',
 			$lead_data['first_name'] ?? '',
 			$lead_data['last_name'] ?? '',
+			$lead_data['phone'] ?? '',
+			$lead_data['company'] ?? '',
+			$lead_data['job_title'] ?? '',
+			$lead_data['message'] ?? '',
 			$lead_data['utm_source'] ?? '',
 			$lead_data['utm_medium'] ?? '',
 			$lead_data['utm_campaign'] ?? '',
@@ -63,8 +67,8 @@ class TRS_Google_Sheets {
 			$lead_data['created_at'] ?? current_time( 'mysql' ),
 		);
 
-		// 3. Send append request to Google Sheets API v4.
-		$range = rawurlencode( $tab_name . '!A:K' );
+		// 3. Send append request to Google Sheets API v4 (Columns A to O).
+		$range   = rawurlencode( $tab_name . '!A:O' );
 		$api_url = sprintf(
 			'https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS',
 			rawurlencode( $spreadsheet_id ),
@@ -72,7 +76,7 @@ class TRS_Google_Sheets {
 		);
 
 		$payload = array(
-			'range'  => $tab_name . '!A:K',
+			'range'  => $tab_name . '!A:O',
 			'values' => array( $row ),
 		);
 
@@ -196,3 +200,4 @@ class TRS_Google_Sheets {
 		return rtrim( strtr( base64_encode( $data ), '+/', '-_' ), '=' );
 	}
 }
+

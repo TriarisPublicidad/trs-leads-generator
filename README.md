@@ -134,9 +134,31 @@ Content-Type: application/json
 
 ---
 
-## 💻 Uso de Shortcodes en Frontend
-Para incrustar cualquier formulario en una página, entrada o maquetador visual:
+## 💻 Uso de Shortcodes Modulares en Frontend
+
+El plugin permite desacoplar los componentes para que puedas insertarlos libremente en columnas o áreas distintas de tu diseño:
+
+### 1. Solo Formulario (Inputs, Captcha, Términos y Botón):
+```text
+[trs_leads_generator_form id="12"]
+```
+
+### 2. Solo Imagen de Portada (Componente Visual Responsivo):
+```text
+[trs_leads_generator_image id="12"]
+```
+
+### 3. Componente Combinado (Imagen Superior + Formulario):
 ```text
 [trs_form id="12"]
 ```
-El formulario detectará automáticamente si el usuario llegó con parámetros UTM (ej. `?utm_source=facebook&utm_campaign=lanzamiento`) y los adjuntará de forma transparente al lead.
+
+### 🎛️ Campos Seleccionables en el Formulario:
+- **Base Obligatoria Fija:** Nombre, Apellido y Correo Electrónico (siempre preseleccionados y obligatorios).
+- **Campos Opcionales a Activar en el Panel:**
+  - ☑️ Teléfono / WhatsApp (`phone`)
+  - ☑️ Institución / Empresa (`company`)
+  - ☑️ Cargo / Puesto (`job_title`)
+  - ☑️ Mensaje / Comentarios (`message`)
+- *Regla de negocio:* Si un campo opcional se activa en el metabox, se vuelve **obligatorio por defecto** para el visitante al enviar el formulario.
+- **Atribución Automática:** Todos los formularios detectan parámetros UTM por URL o cookie (`utm_source`, `utm_medium`, etc.) y los adjuntan al lead de forma 100% transparente.
